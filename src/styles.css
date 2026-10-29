@@ -49,6 +49,25 @@ a {
 button {
   color: inherit;
 }
+button:not(:disabled),
+a[href],
+select,
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'],
+label[for],
+[role='button'],
+[role='tab'],
+[role='option'],
+[data-clickable='true'] {
+  cursor: pointer;
+}
+button:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
 :focus-visible {
   outline: 2px solid var(--orange-light);
   outline-offset: 3px;
