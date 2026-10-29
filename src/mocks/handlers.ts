@@ -20,6 +20,7 @@ import {
   getProfile,
   getSessionFromToken,
   getWallets,
+  addWalletDemoBalance,
   changeNftForScenario,
   getCollections,
   listFavorites,
@@ -474,6 +475,22 @@ export const handlers = [
         String(params.walletId),
       ),
     ),
+  ),
+  http.post('*/api/wallets/:walletId/demo-balance', ({ request, params }) =>
+    respond(request, async () => {
+      const body = await readBody<{ amount?: unknown }>(request)
+      if (typeof body.amount !== 'string')
+        throw new DatabaseError(
+          422,
+          'INVALID_DEMO_TOP_UP',
+          'Informe o valor demonstrativo em ETH.',
+        )
+      return addWalletDemoBalance(
+        requireUser(request).id,
+        String(params.walletId),
+        body.amount,
+      )
+    }),
   ),
 
   http.post('*/api/orders', ({ request }) =>

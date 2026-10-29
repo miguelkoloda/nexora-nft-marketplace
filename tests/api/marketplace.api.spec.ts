@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { http as mswHttp, HttpResponse } from 'msw'
 import {
   ApiError,
   getSessionToken,
@@ -44,6 +45,20 @@ test('lista e filtra NFTs com paginação e ordenação', async () => {
   expect(result.items).toHaveLength(2)
   expect(result.items[0].id).toBe('emerald-ape-071')
   expect(result.pageCount).toBe(3)
+})
+
+test('rejeita respostas de catálogo que não cumprem o contrato PageResult', async () => {
+  server.use(
+    mswHttp.get('*/api/nfts', () =>
+      HttpResponse.json({ data: { items: [] } }),
+    ),
+  )
+
+  await expect(catalogApi.list()).rejects.toMatchObject({
+    name: 'ApiContractError',
+    code: 'API_CONTRACT_ERROR',
+    message: expect.stringContaining('GET /api/nfts'),
+  })
 })
 
 test('retorna 404 tipado para NFT inexistente', async () => {
@@ -474,6 +489,32 @@ test('saldo insuficiente rejeita pedido e preserva saldo e carrinho', async () =
     .toBe('0.1')
   expect((await cartApi.get()).items).toHaveLength(1)
   expect(await ordersApi.list()).toHaveLength(0)
+})
+
+test('recarga demonstrativa valida valor, persiste saldo e permite concluir pedido', async () => {
+  await authApi.login({ email: 'alex@kurio.test', password: 'Kurio123!' })
+  const before = (await walletsApi.list()).find(
+    (wallet) => wallet.id === 'wallet-alex-secondary',
+  )!
+  await expect(
+    walletsApi.addDemoBalance(before.id, '-1'),
+  ).rejects.toMatchObject({ status: 422, code: 'INVALID_DEMO_TOP_UP' })
+  expect(
+    (await walletsApi.list()).find((wallet) => wallet.id === before.id)?.balance,
+  ).toBe(before.balance)
+
+  const funded = await walletsApi.addDemoBalance(before.id, '2.0')
+  expect(funded.balance).toBe('2.25')
+  await cartApi.add({ nftId: 'emerald-ape-042', quantity: 1 })
+  const quote = await cartApi.quote()
+  const order = await ordersApi.create(
+    { quoteId: quote.id, walletId: funded.id },
+    'demo-top-up-purchase',
+  )
+  expect(order.status).toBe('confirmed')
+  expect(
+    (await walletsApi.list()).find((wallet) => wallet.id === funded.id)?.balance,
+  ).toBe('1.044')
 })
 
 test('o endpoint de reset restaura fixtures e limpa a sessão do cliente', async () => {

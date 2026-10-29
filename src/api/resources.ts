@@ -1,4 +1,4 @@
-import { http, resetApiClientState } from './client'
+import { ApiContractError, http, resetApiClientState } from './client'
 import type {
   Cart,
   CatalogQuery,
@@ -28,11 +28,55 @@ export type ProfileUpdate = Partial<
 export type WalletInput = Omit<Wallet, 'id' | 'balance'> & { balance?: string }
 export type OrderInput = { quoteId: string; walletId: string }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function parseCatalogPage(value: unknown): PageResult<Nft> {
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.items) ||
+    !Number.isSafeInteger(value.page) ||
+    !Number.isSafeInteger(value.pageSize) ||
+    !Number.isSafeInteger(value.total) ||
+    !Number.isSafeInteger(value.pageCount)
+  ) {
+    throw new ApiContractError(
+      'GET /api/nfts',
+      '{ items: Nft[], page: number, pageSize: number, total: number, pageCount: number }',
+      value,
+    )
+  }
+
+  const validNft = value.items.every(
+    (item) =>
+      isRecord(item) &&
+      typeof item.id === 'string' &&
+      typeof item.name === 'string' &&
+      typeof item.collection === 'string' &&
+      typeof item.price === 'string' &&
+      typeof item.edition === 'string' &&
+      typeof item.artwork === 'string' &&
+      typeof item.category === 'string' &&
+      typeof item.network === 'string' &&
+      Number.isSafeInteger(item.availableQuantity),
+  )
+  if (!validNft) {
+    throw new ApiContractError(
+      'GET /api/nfts',
+      'items contendo somente objetos Nft válidos',
+      value.items,
+    )
+  }
+
+  return value as unknown as PageResult<Nft>
+}
+
 export const catalogApi = {
   list: (query: CatalogQuery = {}, signal?: AbortSignal) =>
     http
-      .get<PageResult<Nft>>('/nfts', { params: query, signal })
-      .then((r) => r.data),
+      .get<unknown>('/nfts', { params: query, signal })
+      .then((r) => parseCatalogPage(r.data)),
   get: (id: string, signal?: AbortSignal) =>
     http
       .get<Nft>(`/nfts/${encodeURIComponent(id)}`, { signal })
@@ -105,6 +149,12 @@ export const walletsApi = {
   update: (id: string, input: Partial<WalletInput>) =>
     http
       .patch<Wallet>(`/wallets/${encodeURIComponent(id)}`, input)
+      .then((r) => r.data),
+  addDemoBalance: (id: string, amount: string) =>
+    http
+      .post<Wallet>(`/wallets/${encodeURIComponent(id)}/demo-balance`, {
+        amount,
+      })
       .then((r) => r.data),
 }
 

@@ -754,6 +754,40 @@ export function saveWallet(
   return structuredClone(wallet)
 }
 
+export function addWalletDemoBalance(
+  userId: string,
+  walletId: string,
+  amount: string,
+): Wallet {
+  let amountValue: bigint
+  try {
+    amountValue = parseEther(amount)
+  } catch {
+    throw new DatabaseError(
+      422,
+      'INVALID_DEMO_TOP_UP',
+      'Informe um valor demonstrativo válido em ETH.',
+      { amount: 'Use um valor maior que zero, com até 18 casas decimais.' },
+    )
+  }
+  if (amountValue <= 0n) {
+    throw new DatabaseError(
+      422,
+      'INVALID_DEMO_TOP_UP',
+      'Informe um valor demonstrativo maior que zero.',
+      { amount: 'O valor precisa ser positivo.' },
+    )
+  }
+  const wallet = (database.wallets[userId] ?? []).find(
+    (entry) => entry.id === walletId,
+  )
+  if (!wallet)
+    throw new DatabaseError(404, 'WALLET_NOT_FOUND', 'Carteira não encontrada.')
+  wallet.balance = formatEther(parseEther(wallet.balance) + amountValue)
+  save(database)
+  return structuredClone(wallet)
+}
+
 export function createQuote(ownerId: string): Quote {
   const cart = getCart(ownerId)
   for (const item of cart.items) {

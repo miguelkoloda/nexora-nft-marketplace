@@ -82,6 +82,22 @@ export class ApiError extends Error {
   }
 }
 
+export class ApiContractError extends ApiError {
+  constructor(resource: string, expected: string, received: unknown) {
+    const shape = Array.isArray(received)
+      ? 'array'
+      : received === null
+        ? 'null'
+        : typeof received
+    super(
+      `Resposta incompatível da API para ${resource}: esperado ${expected}, recebido ${shape}. Verifique VITE_API_BASE_URL e o contrato do endpoint.`,
+      0,
+      'API_CONTRACT_ERROR',
+    )
+    this.name = 'ApiContractError'
+  }
+}
+
 function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error
   if (axios.isAxiosError<ApiErrorPayload>(error)) {

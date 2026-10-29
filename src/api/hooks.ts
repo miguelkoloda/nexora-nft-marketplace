@@ -333,6 +333,16 @@ export function useUpdateWallet(userId = getSessionUserId()) {
   })
 }
 
+export function useAddDemoWalletBalance(userId = getSessionUserId()) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: string }) =>
+      walletsApi.addDemoBalance(id, amount),
+    onSuccess: () =>
+      client.invalidateQueries({ queryKey: queryKeys.wallets(userId) }),
+  })
+}
+
 export function useCreateOrder(userId = getSessionUserId()) {
   const client = useQueryClient()
   return useMutation({

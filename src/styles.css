@@ -6894,6 +6894,38 @@ img {
   cursor: pointer;
 }
 
+.demo-top-up {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 10px;
+}
+
+.demo-top-up label {
+  display: grid;
+  gap: 4px;
+  color: #eee6df;
+  font: 8px var(--mono);
+}
+
+.demo-top-up input {
+  width: 100px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid #3b271d;
+  border-radius: 2px;
+  color: #b99464;
+  background: #130d0a;
+  font: 9px var(--mono);
+}
+
+.demo-top-up small {
+  flex-basis: 100%;
+  color: #bb9a6c;
+  font: 8px/1.4 var(--mono);
+}
+
 .wallet-settings-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

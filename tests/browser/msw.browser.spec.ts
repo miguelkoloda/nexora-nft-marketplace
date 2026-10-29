@@ -58,6 +58,22 @@ test('catálogo pesquisa NFTs e mantém a busca na URL', async ({ page }) => {
   await expect(page).toHaveURL(/search=nomad/)
 })
 
+test('contagens das categorias correspondem ao catálogo seed e aos resultados filtrados', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.waitForFunction(
+    () => document.documentElement.dataset.mockWorkerReady === 'true',
+  )
+  const categoryButton = page
+    .getByRole('button', { name: /Arte digital/ })
+    .first()
+  await expect(categoryButton).toContainText('(3)')
+  await categoryButton.click()
+  await expect(page.locator('.nft-card')).toHaveCount(3)
+  await expect(categoryButton).toHaveAttribute('aria-pressed', 'true')
+})
+
 test('preview da primeira arte da home aparece enquanto REST responde', async ({
   page,
 }) => {
@@ -477,4 +493,52 @@ test('adiciona carteira secundaria pela interface e persiste apos recarregar', a
       (wallet: { label: string }) => wallet.label === 'Reserva de teste',
     ).balance,
   ).toBe('0.25')
+})
+
+test('permite recarregar saldo demo na carteira principal e comprar um NFT', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.waitForFunction(
+    () => document.documentElement.dataset.mockWorkerReady === 'true',
+  )
+  await page.evaluate(async () => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'sam@kurio.test',
+        password: 'Collect123!',
+      }),
+    })
+    const session = await response.json()
+    localStorage.setItem('kurio.session.token', session.token)
+    localStorage.setItem('kurio.session.user', session.user.id)
+  })
+
+  await page.goto('/account/wallets')
+  await page.getByLabel('Valor da recarga demonstrativa em ETH').fill('2.0')
+  await page.getByRole('button', { name: 'Adicionar saldo de teste' }).click()
+  await expect(page.getByRole('status')).toContainText(
+    '2.0 ETH demonstrativo adicionado',
+  )
+  await expect(page.getByText('10 ETH', { exact: true })).toBeVisible()
+
+  await page.evaluate(async () => {
+    const token = localStorage.getItem('kurio.session.token')
+    await fetch('/api/cart/items', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ nftId: 'emerald-ape-042', quantity: 1 }),
+    })
+  })
+  await page.goto('/checkout')
+  const buyButton = page.getByRole('button', { name: /Confirmar compra/ })
+  await expect(buyButton).toBeEnabled()
+  await buyButton.click()
+  await expect(page).toHaveURL(/\/orders\/.*\/confirmation$/)
+  await expect(page.getByText('Pedido confirmado')).toBeVisible()
 })

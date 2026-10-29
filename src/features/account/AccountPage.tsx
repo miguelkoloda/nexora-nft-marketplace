@@ -16,6 +16,7 @@ import { Button } from '../../components/ui/Button'
 import { ApiError } from '../../api/client'
 import {
   useChangePassword,
+  useAddDemoWalletBalance,
   useLogout,
   useOrders,
   useProfile,
@@ -138,6 +139,7 @@ function WalletSettings() {
   const wallets = useWallets()
   const saveWallet = useSaveWallet()
   const updateWallet = useUpdateWallet()
+  const addDemoBalance = useAddDemoWalletBalance()
 
   const primaryWallet =
     wallets.data?.find((w) => w.isPrimary) ?? wallets.data?.[0]
@@ -158,6 +160,7 @@ function WalletSettings() {
   const [addingWallet, setAddingWallet] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [topUpAmount, setTopUpAmount] = useState('1.0')
 
   useEffect(() => {
     if (profile.data) {
@@ -290,6 +293,25 @@ function WalletSettings() {
     }
   }
 
+  async function handleAddDemoBalance() {
+    if (!primaryWallet) return
+    setError('')
+    setMessage('')
+    try {
+      await addDemoBalance.mutateAsync({
+        id: primaryWallet.id,
+        amount: topUpAmount,
+      })
+      setMessage(`${topUpAmount} ETH demonstrativo adicionado à carteira principal.`)
+    } catch (cause) {
+      setError(
+        cause instanceof ApiError
+          ? cause.message
+          : 'Não foi possível adicionar saldo demonstrativo.',
+      )
+    }
+  }
+
   if (wallets.isPending) {
     return (
       <section className="account-wallet-settings" aria-busy="true">
@@ -314,6 +336,28 @@ function WalletSettings() {
                 {primaryWallet.balance} ETH
               </strong>
             </p>
+          )}
+          {primaryWallet && (
+            <div className="demo-top-up" aria-label="Adicionar saldo demonstrativo">
+              <label>
+                Recarga de demonstração (ETH)
+                <input
+                  aria-label="Valor da recarga demonstrativa em ETH"
+                  inputMode="decimal"
+                  value={topUpAmount}
+                  onChange={(event) => setTopUpAmount(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="wallet-add-link"
+                onClick={() => void handleAddDemoBalance()}
+                disabled={addDemoBalance.isPending}
+              >
+                {addDemoBalance.isPending ? 'Adicionando...' : 'Adicionar saldo de teste'}
+              </button>
+              <small>Saldo fictício apenas para testar o checkout; não movimenta cripto real.</small>
+            </div>
           )}
         </div>
         {!addingWallet && !secondaryWallet && (

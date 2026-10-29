@@ -15,14 +15,14 @@ import { Button } from '../../components/ui/Button'
 import { mockModeEnabled } from '../../realtime/config'
 
 const collectionFilters = [
-  ['Arte digital', '33'],
-  ['Fotografia', '12'],
-  ['Música', '65'],
-  ['Arte 3D', '39'],
-  ['Colecionáveis', '23'],
-  ['Generativa', '17'],
-  ['Jogos', '19'],
-  ['Utilidade', '18'],
+  'Arte digital',
+  'Fotografia',
+  'Música',
+  'Arte 3D',
+  'Colecionáveis',
+  'Generativa',
+  'Jogos',
+  'Utilidade',
 ]
 const articles = [
   'Como funciona a propriedade de NFTs',
@@ -50,6 +50,7 @@ export function HomePage() {
   const navigate = useNavigate()
   const catalog = useNfts({ ...search, page: search.page ?? 1, pageSize })
   const highlights = useNfts({ page: 1, pageSize })
+  const categoryCatalog = useNfts({ page: 1, pageSize: 50 })
   const [searchInput, setSearchInput] = useState(search.search ?? '')
   const [minDraft, setMinDraft] = useState(() =>
     toCents(search.minPrice, minPriceCents),
@@ -81,6 +82,10 @@ export function HomePage() {
   }, [search.minPrice, search.maxPrice])
 
   const items = catalog.data?.items ?? []
+  const categoryCounts = new Map<string, number>()
+  for (const nft of categoryCatalog.data?.items ?? []) {
+    categoryCounts.set(nft.category, (categoryCounts.get(nft.category) ?? 0) + 1)
+  }
   const isInitialCatalog =
     !search.search &&
     !search.category &&
@@ -245,7 +250,7 @@ export function HomePage() {
           <div className="filters-panel">
             <h2>Coleções</h2>
             <div className="filter-group collection-list">
-              {collectionFilters.map(([label, count]) => (
+              {collectionFilters.map((label) => (
                 <button
                   className={`filter-row${search.category === label ? ' filter-active' : ''}`}
                   key={label}
@@ -253,7 +258,7 @@ export function HomePage() {
                   onClick={() => categoryClick(label)}
                 >
                   <span>{label}</span>
-                  <small>({count})</small>
+                  <small>({categoryCounts.get(label) ?? 0})</small>
                 </button>
               ))}
             </div>
@@ -413,7 +418,11 @@ export function HomePage() {
             />
           ) : catalog.isError ? (
             <div className="catalog-message" role="alert">
-              <p>Não foi possível carregar os NFTs.</p>
+              <p>
+                {catalog.error instanceof Error
+                  ? catalog.error.message
+                  : 'Não foi possível carregar os NFTs.'}
+              </p>
               <button onClick={() => void catalog.refetch()}>
                 Tentar novamente
               </button>
