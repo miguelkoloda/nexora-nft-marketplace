@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: nexora-realtime
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node --experimental-strip-types server/realtime/index.ts
+    healthCheckPath: /__demo/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REALTIME_HOST
+        value: 0.0.0.0
+      - key: REALTIME_ALLOWED_ORIGIN
+        sync: false
+      - key: REALTIME_JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: nexora-marketplace
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_ENABLE_MOCKS
+        value: "true"
+      - key: VITE_REALTIME_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
