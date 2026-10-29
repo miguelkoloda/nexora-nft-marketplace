@@ -1,12 +1,18 @@
 # Nexora NFT Marketplace
 
-Marketplace demonstrativo de NFTs criado para o desafio frontend da Jungle Gaming. A aplicação apresenta catálogo e detalhes de NFTs, favoritos, carrinho, cupons, checkout simulado, conta do colecionador, pedidos e atualizações em tempo real. Não há transferência real de ETH, conexão real com carteiras ou integração com blockchain.
+Marketplace demonstrativo de NFTs desenvolvido com React, TypeScript e Vite para demonstrar competências em desenvolvimento frontend.
+
+A aplicação oferece catálogo de NFTs, filtros dinâmicos, busca, favoritos, carrinho, cupons, carteira com saldo demonstrativo, checkout simulado, histórico de pedidos e atualizações de estado na interface.
+
+O projeto utiliza TanStack Router, TanStack Query, Axios, MSW, Tailwind CSS e Playwright. A arquitetura separa a interface, a camada de comunicação HTTP, as regras de domínio e os dados simulados.
+
+**Importante:** este é um projeto demonstrativo. Não há transações reais, conexão com carteiras blockchain ou transferência de criptomoedas.
 
 ## URLs da entrega
 
-- Repositório: **[inserir URL pública do repositório]**
-- Aplicação: **ainda não publicada**
-- Servidor Socket.IO: **ainda não publicado**
+- Repositório: **https://github.com/miguelkoloda/nexora-nft-marketplace**
+- Aplicação: **https://nexora-nft-marketplace-woad.vercel.app/**
+- Servidor Socket.IO: **não publicado; a demonstração funciona com dados simulados.**
 
 ## Requisitos
 
@@ -120,6 +126,16 @@ Hospede o frontend estático e o servidor Socket.IO como serviços separados, co
 O projeto Vite gera `dist` com `npm run build`. O arquivo [`vercel.json`](vercel.json) adiciona o rewrite SPA necessário para acesso direto e refresh de rotas TanStack; arquivos estáticos existentes são servidos antes do rewrite. Configure Framework Preset **Vite**, Build Command `npm run build` e Output Directory `dist` (ou mantenha os valores detectados automaticamente). Para a demo, defina `VITE_ENABLE_MOCKS=true` antes do build. `VITE_REALTIME_URL` deve apontar somente a um servidor Socket.IO publicado; deixe vazio na demo sem eventos realtime. Nunca configure segredos como `VITE_*`.
 
 O Vercel publica o frontend estático, não o processo `server/realtime/index.ts`. O cliente Socket.IO tem reconexão e as consultas REST continuam funcionando sem socket. Se precisar de realtime, hospede o sidecar num serviço compatível ou adapte-o conscientemente a uma rota WebSocket/Vercel Function com estado compartilhado: a arquitetura atual não se publica como servidor Node persistente apenas adicionando `vercel.json`. A documentação do Vercel descreve rewrites para deep links em SPAs Vite e WebSockets em Functions com conexões ligadas à instância/duração e coordenação externa ([Vite](https://vercel.com/docs/frameworks/frontend/vite), [rewrites](https://vercel.com/docs/routing/rewrites), [WebSockets](https://vercel.com/kb/guide/do-vercel-serverless-functions-support-websocket-connections)). Nenhuma URL foi configurada ou publicada.
+
+### Status da publicação
+
+O frontend está hospedado na Vercel:
+
+https://nexora-nft-marketplace-woad.vercel.app/
+
+A aplicação utiliza MSW para simular a API REST durante a demonstração. Os dados e o saldo da carteira são demonstrativos, e não representam transações financeiras reais.
+
+O servidor Socket.IO é executado separadamente e não faz parte do deploy estático do frontend. Para disponibilizar os recursos de realtime em um ambiente público, é necessário hospedar e configurar esse serviço separadamente.
 
 ### Preparação para Render
 
